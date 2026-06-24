@@ -3,339 +3,428 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sarah & Michael | The Modern Edit</title>
+    <title>The Wedding — Alex & Jordan</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital@0;1&display=swap" rel="stylesheet">
-    
-    <!-- React & ReactDOM (Development versions show errors in console) -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 
     <style>
+        [x-cloak] { display: none !important; }
+        :root { 
+            --bg: #FFFFFF;
+            --text: #1C1917;
+            --accent: #800020; 
+        }
         body {
-            background-color: #FAFAFA;
-            color: #111;
             font-family: 'Plus Jakarta Sans', sans-serif;
-            overflow-x: hidden;
+            background-color: var(--bg);
+            color: var(--text);
+            scroll-behavior: smooth;
+            overflow-x: hidden; /* Prevents tiny horizontal shifts on mobile */
         }
-
-        ::-webkit-scrollbar { width: 0px; background: transparent; }
-        html { scroll-behavior: smooth; }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
+        .serif { font-family: 'Cormorant Garamond', serif; }
+        
+        .img-wrap { 
+            overflow: hidden; 
+            background: #F5F5F4; 
+            position: relative;
+            width: 100%;
         }
-
-        .text-gradient {
-            background: linear-gradient(135deg, #111 0%, #666 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        .img-wrap img { 
+            transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1); 
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
         }
+        .img-wrap:hover img { transform: scale(1.04); }
 
-        @keyframes marquee {
-            0% { transform: translateX(0%); }
-            100% { transform: translateX(-50%); }
-        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #FAFAFA; }
+        ::-webkit-scrollbar-thumb { background: #1C1917; }
 
-        .animate-marquee {
-            animation: marquee 20s linear infinite;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .fade-in {
-            animation: fadeIn 0.6s ease-out forwards;
-            opacity: 0; /* Start invisible until animation kicks in */
-        }
-
-        /* Staggered delays */
-        .stagger-1 { animation-delay: 0.1s; }
-        .stagger-2 { animation-delay: 0.2s; }
-        .stagger-3 { animation-delay: 0.3s; }
-        .stagger-4 { animation-delay: 0.4s; }
+        /* Responsive spacing utilities */
+        .section-padding { @apply py-16 md:py-24 px-6 md:px-12 lg:px-20; }
     </style>
 </head>
-<body class="antialiased selection:bg-black selection:text-white">
+<body x-data="editorialTheme()" x-init="init()">
+
+    <!-- ================= NAVBAR ================= -->
+    <nav :class="scrolled ? 'bg-white/95 backdrop-blur-md py-4 border-b border-stone-200' : 'bg-transparent py-6 md:py-8'" 
+         class="fixed top-0 left-0 w-full z-50 px-6 md:px-12 flex justify-between items-center transition-all duration-500">
+        <a href="#" class="serif italic text-2xl md:text-3xl font-semibold tracking-tight">
+            <span x-text="config.groomInitials"></span> 
+            <span class="text-stone-300 mx-1">&</span> 
+            <span x-text="config.brideInitials"></span>
+        </a>
+        
+        <!-- Desktop Menu -->
+        <div class="hidden lg:flex gap-8 text-[10px] uppercase tracking-[0.3em] font-medium text-stone-600">
+            <a href="#story" class="hover:text-black transition-colors">Story</a>
+            <a href="#event" class="hover:text-black transition-colors">Details</a>
+            <a href="#attire" class="hover:text-black transition-colors">Attire</a>
+            <a href="#entourage" class="hover:text-black transition-colors">Party</a>
+            <a href="#gallery" class="hover:text-black transition-colors">Gallery</a>
+            <a href="#registry" class="hover:text-black transition-colors">Registry</a>
+            <a href="#faq" class="hover:text-black transition-colors">FAQ</a>
+            <a href="#rsvp" class="text-[var(--accent)] font-semibold">RSVP</a>
+        </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button @click="mobileMenu = !mobileMenu" class="lg:hidden text-[10px] uppercase tracking-widest font-bold p-2 z-[60] relative">
+            <span x-text="mobileMenu ? 'CLOSE' : 'MENU'"></span>
+        </button>
+    </nav>
+
+    <!-- MOBILE MENU OVERLAY -->
+    <div x-show="mobileMenu" 
+         x-cloak 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-[-100%]"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-[-100%]"
+         class="fixed inset-0 bg-white z-50 pt-28 px-8 flex flex-col gap-5 serif text-3xl md:text-4xl overflow-y-auto">
+        <a @click="mobileMenu = false" href="#story">01. The Story</a>
+        <a @click="mobileMenu = false" href="#event">02. Event Details</a>
+        <a @click="mobileMenu = false" href="#attire">03. Attire Guide</a>
+        <a @click="mobileMenu = false" href="#entourage">04. Wedding Party</a>
+        <a @click="mobileMenu = false" href="#gallery">05. Gallery</a>
+        <a @click="mobileMenu = false" href="#registry">06. Registry</a>
+        <a @click="mobileMenu = false" href="#faq">07. FAQs</a>
+        <a @click="mobileMenu = false" href="#rsvp" class="text-[var(--accent)] italic font-semibold">08. RSVP</a>
+    </div>
+
+<!-- ================= HERO ================= -->
+<header class="relative min-h-screen flex flex-col justify-between pt-32 pb-12 px-6 md:px-12 overflow-hidden">
     
-    <div id="root"></div>
+    <!-- BACKGROUND IMAGE LAYER -->
+    <div class="absolute inset-0 -z-10">
+        <!-- Replace URL with the couple's photo -->
+        <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2000" 
+             class="w-full h-full object-cover object-center opacity-70 filter grayscale-[40%]" 
+             alt="Hero Background">
+        
+        <!-- OPTIONAL: Gradient to make the bottom of the photo fade into the white countdown section -->
+        <div class="absolute inset-0 bg-gradient-to-b from-white/10 via-transparent to-white"></div>
+    </div>
 
-    <!-- Added data-presets="react" to help Babel -->
-    <script type="text/babel" data-presets="react">
-        const { useState } = React;
+    <!-- CONTENT WRAPPER (Max-width container) -->
+    <div class="max-w-7xl mx-auto w-full flex flex-col justify-between h-full flex-grow">
+        <div class="reveal" :class="{ 'visible': true }">
+            <p class="text-[10px] uppercase tracking-[0.5em] text-stone-400 mb-6">The Marriage of</p>
+            <h1 class="serif text-6xl sm:text-8xl md:text-[11rem] lg:text-[13rem] tracking-tight leading-[0.85] uppercase relative">
+                <span x-text="config.groomFirstName"></span><br>
+                <span class="italic lowercase font-light text-[var(--accent)] md:ml-32">&</span> 
+                <span x-text="config.brideFirstName"></span>
+            </h1>
+        </div>
 
-        const DATA = {
-            date: "June 15, 2026",
-            groom: "Michael",
-            bride: "Sarah",
-            hashtag: "#SarahAndMichael2026"
-        };
-
-        const MEMORIES = [
-          { url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80', label: 'Beach Getaway', span: 'col-span-1' },
-          { url: 'https://images.unsplash.com/photo-1529634597607-eb4a4c49d99a?w=800&q=80', label: 'Mountain Trip', span: 'col-span-2' },
-          { url: 'https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=800&q=80', label: 'City Date', span: 'col-span-1' },
-          { url: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?w=800&q=80', label: 'Lakeside', span: 'col-span-1' },
-          { url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=800&q=80', label: 'The Proposal', span: 'col-span-1' }
-        ];
-
-        const Navbar = () => (
-            <nav className="fixed top-6 inset-x-0 mx-auto w-max z-50 glass-panel px-6 py-3 rounded-full shadow-sm flex items-center gap-6 fade-in">
-                <span className="font-bold tracking-tight">S{"&"}M</span>
-                <div className="w-px h-4 bg-gray-300"></div>
-                <div className="flex gap-4 text-sm font-medium text-gray-500">
-                    <a href="#story" className="hover:text-black transition-colors">Story</a>
-                    <a href="#details" className="hover:text-black transition-colors">Details</a>
-                    <a href="#memories" className="hover:text-black transition-colors">Gallery</a>
-                    <a href="#rsvp" className="hover:text-black transition-colors">RSVP</a>
-                </div>
-            </nav>
-        );
-
-        const BentoCard = ({ children, className = '', delay = '' }) => (
-            <div className={`bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 overflow-hidden relative transition-all hover:-translate-y-1 hover:shadow-lg fade-in ${delay} ${className}`}>
-                {children}
+        <!-- COUNTDOWN BAR -->
+        <div class="border-y border-stone-200 py-6 my-12 grid grid-cols-2 md:grid-cols-4 gap-4 text-center reveal backdrop-blur-[2px] bg-white/10" style="transition-delay: 0.3s" :class="{ 'visible': true }">
+            <div class="border-r border-stone-200 last:border-none">
+                <span class="serif text-3xl md:text-4xl block" x-text="timeLeft.days"></span>
+                <span class="text-[9px] uppercase tracking-[0.3em] text-stone-400">Days</span>
             </div>
-        );
+            <div class="border-r border-stone-200 last:border-none">
+                <span class="serif text-3xl md:text-4xl block" x-text="timeLeft.hours"></span>
+                <span class="text-[9px] uppercase tracking-[0.3em] text-stone-400">Hours</span>
+            </div>
+            <div class="border-r border-stone-200 last:border-none">
+                <span class="serif text-3xl md:text-4xl block" x-text="timeLeft.minutes"></span>
+                <span class="text-[9px] uppercase tracking-[0.3em] text-stone-400">Minutes</span>
+            </div>
+            <div>
+                <span class="serif text-3xl md:text-4xl block text-[var(--accent)]" x-text="timeLeft.seconds"></span>
+                <span class="text-[9px] uppercase tracking-[0.3em] text-stone-400">Seconds</span>
+            </div>
+        </div>
 
-        const Hero = () => (
-            <section className="min-h-screen pt-32 pb-12 px-4 md:px-8">
-                <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 h-full">
-                    <BentoCard className="md:col-span-2 md:row-span-2 flex flex-col justify-between min-h-[400px] bg-gray-50" delay="stagger-1">
-                        <div>
-                            <div className="inline-block px-3 py-1 bg-black text-white rounded-full text-xs font-bold mb-4">
-                                SAVE THE DATE
-                            </div>
-                            <h1 className="text-6xl md:text-8xl font-bold tracking-tighter leading-[0.9] text-gradient">
-                                {DATA.bride} <br/> <span className="text-gray-300">{"&"}</span> {DATA.groom}
-                            </h1>
-                        </div>
-                        <div className="flex justify-between items-end">
-                            <p className="text-xl font-medium text-gray-500">Napa Valley, CA</p>
-                            <div className="text-right">
-                                <p className="text-3xl font-bold">15</p>
-                                <p className="text-xs font-bold uppercase tracking-widest text-gray-400">June</p>
-                            </div>
-                        </div>
-                    </BentoCard>
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 text-xs uppercase tracking-[0.3em] text-stone-500 reveal" style="transition-delay: 0.5s" :class="{ 'visible': true }">
+            <span x-text="config.fullDate"></span>
+            <span x-text="config.cityState"></span>
+        </div>
+    </div>
+</header>
 
-                    <BentoCard className="md:col-span-2 md:row-span-1 p-0 overflow-hidden h-64 md:h-auto group" delay="stagger-2">
-                        <img 
-                            src="https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&q=80" 
-                            className="w-full h-full object-cover transition-transform hover:scale-105"
-                            alt="Hero"
-                        />
-                        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur px-4 py-2 rounded-xl text-xs font-bold">
-                            EST. 2022
-                        </div>
-                    </BentoCard>
-
-                    <BentoCard className="md:col-span-1 bg-black text-white flex flex-col justify-center text-center" delay="stagger-3">
-                        <p className="text-gray-400 text-xs font-bold uppercase mb-2">Days To Go</p>
-                        <p className="text-6xl font-bold">392</p>
-                    </BentoCard>
-
-                    <a 
-                        href="#rsvp"
-                        className="md:col-span-1 bg-[#D4AF37] rounded-[2rem] flex items-center justify-center p-8 cursor-pointer shadow-lg transition-transform hover:scale-95 fade-in stagger-4"
-                    >
-                        <span className="text-white font-bold text-xl">RSVP NOW &rarr;</span>
-                    </a>
-                </div>
-            </section>
-        );
-
-        const Marquee = () => (
-            <div className="py-12 overflow-hidden bg-white border-y border-gray-100">
-                <div className="flex whitespace-nowrap gap-8 text-6xl font-bold text-gray-200 uppercase tracking-tighter animate-marquee">
-                    <span>Forever Starts Here</span>
-                    <span>✦</span>
-                    <span>Sarah {"&"} Michael</span>
-                    <span>✦</span>
-                    <span>June 15</span>
-                    <span>✦</span>
-                    <span>Forever Starts Here</span>
-                    <span>✦</span>
-                    <span>Sarah {"&"} Michael</span>
-                    <span>✦</span>
-                    <span>June 15</span>
-                    <span>✦</span>
+    <!-- ================= THE STORY ================= -->
+    <section id="story" class="py-20 md:py-24 px-6 md:px-12 max-w-7xl mx-auto border-t border-stone-200">
+        <div class="grid lg:grid-cols-12 gap-10 lg:gap-16 items-start">
+            <div class="lg:col-span-5 space-y-6">
+                <p class="text-[10px] uppercase tracking-[0.4em] text-[var(--accent)] font-semibold">How we got here</p>
+                <h2 class="serif text-4xl md:text-6xl lg:text-7xl leading-tight">A Story of <br><span class="italic font-light">Serendipity</span></h2>
+                <div class="space-y-4 md:space-y-6 pt-2">
+                    <p class="text-stone-600 font-light leading-relaxed text-sm md:text-base" x-text="config.storyText1"></p>
+                    <p class="text-stone-600 font-light leading-relaxed text-sm md:text-base" x-text="config.storyText2"></p>
                 </div>
             </div>
-        );
-
-        const Details = () => (
-            <section id="details" className="py-24 px-4 bg-gray-50">
-                <div className="max-w-5xl mx-auto">
-                    <h2 className="text-4xl font-bold mb-12 text-center">The Itinerary</h2>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <BentoCard className="group cursor-default">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className="p-3 bg-gray-100 rounded-2xl">
-                                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                </div>
-                                <span className="text-4xl font-bold text-gray-300 group-hover:text-black transition-colors">01</span>
-                            </div>
-                            <h3 className="text-2xl font-bold mb-1">The Ceremony</h3>
-                            <p className="text-gray-500 mb-4">2:00 PM • St. Mary's Chapel</p>
-                            <div className="h-40 bg-gray-200 rounded-2xl overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1519167758481-83f29da8c286?w=800&q=80" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Ceremony" />
-                            </div>
-                        </BentoCard>
-
-                        <BentoCard className="group cursor-default">
-                             <div className="flex justify-between items-start mb-6">
-                                <div className="p-3 bg-gray-100 rounded-2xl">
-                                    <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                                </div>
-                                <span className="text-4xl font-bold text-gray-300 group-hover:text-black transition-colors">02</span>
-                            </div>
-                            <h3 className="text-2xl font-bold mb-1">The Reception</h3>
-                            <p className="text-gray-500 mb-4">5:00 PM • Vineyard Estate</p>
-                            <div className="h-40 bg-gray-200 rounded-2xl overflow-hidden">
-                                <img src="https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&q=80" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" alt="Reception" />
-                            </div>
-                        </BentoCard>
-                    </div>
+            
+            <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-6 pt-6 lg:pt-0">
+                <div class="img-wrap aspect-[3/4]">
+                    <img src="https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1000&auto=format&fit=crop" alt="Editorial 1">
                 </div>
-            </section>
-        );
-
-        const Gallery = () => (
-            <section id="memories" className="py-24 px-4">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex justify-between items-end mb-12">
-                         <h2 className="text-4xl md:text-6xl font-bold">Visuals</h2>
-                        <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">Selected Works</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {MEMORIES.map((mem, i) => (
-                            <div 
-                                key={i}
-                                className={`${mem.span} h-64 md:h-80 rounded-[2rem] overflow-hidden relative group cursor-pointer`}
-                            >
-                                <img 
-                                    src={mem.url} 
-                                    className="w-full h-full object-cover transition-transform hover:scale-110" 
-                                    alt={mem.label}
-                                />
-                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                                    <p className="text-white font-bold text-lg">{mem.label}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                <div class="img-wrap aspect-[3/4] sm:mt-12 lg:mt-20">
+                    <img src="https://images.unsplash.com/photo-1537633552985-df8429e8048b?q=80&w=1000&auto=format&fit=crop" alt="Editorial 2">
                 </div>
-            </section>
-        );
-
-        const EntourageList = () => (
-            <section className="py-24 bg-black text-white px-4">
-                <div className="max-w-3xl mx-auto text-center">
-                    <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-4">Starring</p>
-                    <h2 className="text-5xl md:text-7xl font-bold mb-16">The Entourage</h2>
-                    
-                    <div className="space-y-8">
-                        <div className="grid grid-cols-2 gap-4 pb-8 border-b border-gray-800">
-                             <div>
-                                <p className="text-xs text-gray-500 uppercase mb-1">The Groom</p>
-                                <p className="text-2xl font-bold">{DATA.groom} Anderson</p>
-                             </div>
-                             <div>
-                                <p className="text-xs text-gray-500 uppercase mb-1">The Bride</p>
-                                <p className="text-2xl font-bold">{DATA.bride} Martinez</p>
-                             </div>
-                        </div>
-                        
-                        <div className="py-4">
-                             <p className="text-xs text-gray-500 uppercase mb-6">Principal Sponsors</p>
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg text-gray-300">
-                                <p>Dr. James Wilson</p> <p>Hon. Patricia Roberts</p>
-                                <p>Mr. David Chen</p> <p>Mrs. Elizabeth Thompson</p>
-                                <p>Mr. Robert Miller</p> <p>Mrs. Jennifer Davis</p>
-                             </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 pt-8 border-t border-gray-800">
-                             <div>
-                                <p className="text-xs text-gray-500 uppercase mb-1">Best Man</p>
-                                <p className="text-xl font-bold text-gray-300">Alex Johnson</p>
-                             </div>
-                             <div>
-                                <p className="text-xs text-gray-500 uppercase mb-1">Maid of Honor</p>
-                                <p className="text-xl font-bold text-gray-300">Emily Stevens</p>
-                             </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        );
-
-        const RSVP = () => (
-            <section id="rsvp" className="py-32 px-4 flex justify-center">
-                <div className="bg-[#FAFAFA] border border-gray-200 shadow-xl rounded-[3rem] p-12 md:p-20 text-center max-w-4xl w-full relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-64 h-64 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
-                    <div className="absolute bottom-0 right-0 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
-
-                    <div className="relative z-10">
-                        <h2 className="text-5xl md:text-7xl font-bold mb-6 tracking-tighter">Are you coming?</h2>
-                        <p className="text-xl text-gray-500 mb-12 max-w-lg mx-auto">
-                            We have reserved a seat for you. Please confirm your attendance by <span className="text-black font-bold">May 15, 2026</span>.
-                        </p>
-                        
-                        <div className="flex flex-col md:flex-row gap-4 justify-center">
-                            <a 
-                                href="#" 
-                                className="bg-black text-white px-10 py-4 rounded-full font-bold text-lg shadow-lg hover:bg-gray-800 transition-colors"
-                            >
-                                Confirm Attendance
-                            </a>
-                            <div 
-                                className="px-10 py-4 rounded-full border border-gray-200 font-bold text-lg text-gray-500 flex items-center justify-center gap-2 cursor-pointer hover:bg-white transition-colors"
-                                onClick={() => alert('Gift registry link here')}
-                            >
-                                <span>🎁 Gift Registry</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        );
-
-        const Footer = () => (
-            <footer className="py-12 text-center">
-                <h1 className="text-[10vw] font-bold text-gray-100 leading-none select-none pointer-events-none">S {"&"} M</h1>
-            </footer>
-        );
-
-        const App = () => (
-            <div className="relative">
-                <Navbar />
-                <Hero />
-                <Marquee />
-                <Details />
-                <Gallery />
-                <EntourageList />
-                <RSVP />
-                <Footer />
             </div>
-        );
+        </div>
+    </section>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
+    <!-- ================= CHURCH & VENUE ================= -->
+    <section id="event" class="py-20 md:py-32 bg-stone-900 text-white px-6 md:px-12">
+        <div class="max-w-7xl mx-auto space-y-12 md:space-y-16">
+            <div class="border-b border-stone-800 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+                <h2 class="serif text-4xl md:text-6xl lg:text-7xl">The Main <span class="italic font-light text-[var(--accent)]">Events</span></h2>
+                <span class="text-[10px] uppercase tracking-[0.3em] text-stone-400">Please be prompt</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-0 md:gap-12 divide-y md:divide-y-0 md:divide-x divide-stone-800">
+                <!-- CEREMONY -->
+                <div class="py-10 md:py-0 md:pr-12">
+                    <span class="text-[10px] uppercase tracking-[0.3em] text-[var(--accent)] block font-bold mb-4">01 / The Vows</span>
+                    <h3 class="serif text-3xl md:text-4xl italic mb-4" x-text="config.churchName"></h3>
+                    <p class="text-stone-400 font-light text-sm leading-relaxed mb-8" x-text="config.churchAddress"></p>
+                    <div class="pt-4 flex flex-wrap justify-between items-center gap-4 text-[10px] uppercase tracking-widest text-stone-500 border-t border-stone-800/60">
+                        <span x-text="config.churchTime"></span>
+                        <a :href="config.churchMap" target="_blank" class="underline hover:text-white transition-colors">Google Maps &#8599;</a>
+                    </div>
+                </div>
+
+                <!-- RECEPTION -->
+                <div class="py-10 md:py-0 md:pl-12">
+                    <span class="text-[10px] uppercase tracking-[0.3em] text-[var(--accent)] block font-bold mb-4">02 / The Celebration</span>
+                    <h3 class="serif text-3xl md:text-4xl italic mb-4" x-text="config.venueName"></h3>
+                    <p class="text-stone-400 font-light text-sm leading-relaxed mb-8" x-text="config.venueAddress"></p>
+                    <div class="pt-4 flex flex-wrap justify-between items-center gap-4 text-[10px] uppercase tracking-widest text-stone-500 border-t border-stone-800/60">
+                        <span x-text="config.venueTime"></span>
+                        <a :href="config.venueMap" target="_blank" class="underline hover:text-white transition-colors">Google Maps &#8599;</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= ATTIRE GUIDE ================= -->
+    <section id="attire" class="py-20 md:py-32 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="grid lg:grid-cols-12 gap-10 lg:gap-16 items-center">
+            <div class="lg:col-span-5 space-y-6">
+                <span class="text-[10px] uppercase tracking-[0.4em] text-stone-400">Dress Code</span>
+                <h2 class="serif text-4xl md:text-6xl leading-tight">Black Tie <br><span class="italic font-light">Preferred</span></h2>
+                <p class="text-stone-600 font-light leading-relaxed text-sm md:text-base">
+                    We request that our guests join us in formal evening wear. Think sophisticated floor-length gowns, dark tailored tuxedos, or sharp formal suits. 
+                </p>
+                <div class="pt-4 space-y-3">
+                    <span class="text-[10px] uppercase tracking-widest block text-stone-400">Color Palette</span>
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div class="w-10 h-10 rounded-full bg-[#1C1917] border border-stone-200" title="Obsidian"></div>
+                        <div class="w-10 h-10 rounded-full bg-[#800020] border border-stone-200" title="Bordeaux"></div>
+                        <div class="w-10 h-10 rounded-full bg-[#D8C3A5] border border-stone-200" title="Champagne"></div>
+                        <div class="w-10 h-10 rounded-full bg-[#EFEFEF] border border-stone-200" title="Alabaster"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 w-full img-wrap aspect-video lg:aspect-[16/9]">
+                <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?q=80&w=1200&auto=format&fit=crop" alt="Attire Guide">
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= ENTOURAGE ================= -->
+    <section id="entourage" class="py-20 md:py-32 px-6 md:px-12 max-w-7xl mx-auto border-t border-stone-200">
+        <div class="text-center max-w-2xl mx-auto mb-16 md:mb-24 space-y-4">
+            <p class="text-[10px] uppercase tracking-[0.4em] text-[var(--accent)] font-semibold">The Cast</p>
+            <h2 class="serif text-4xl md:text-6xl">Wedding Party</h2>
+            <p class="text-stone-500 font-light text-sm">The family and beloved friends standing by our side.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-16 text-center md:text-left divide-y lg:divide-y-0 lg:divide-x divide-stone-200">
+            <div class="py-8 md:py-0 lg:pr-10">
+                <h4 class="text-[10px] uppercase tracking-[0.3em] font-semibold text-stone-400 mb-6">Parents</h4>
+                <div class="space-y-8">
+                    <div>
+                        <p class="text-[9px] uppercase tracking-widest text-stone-400 mb-2">Groom's</p>
+                        <div class="serif text-xl space-y-1" x-html="config.groomParents"></div>
+                    </div>
+                    <div>
+                        <p class="text-[9px] uppercase tracking-widest text-stone-400 mb-2">Bride's</p>
+                        <div class="serif text-xl space-y-1" x-html="config.brideParents"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="py-8 md:py-0 lg:px-10">
+                <h4 class="text-[10px] uppercase tracking-[0.3em] font-semibold text-stone-400 mb-6">Principal Sponsors</h4>
+                <div class="serif text-lg space-y-3 text-stone-700 leading-relaxed" x-html="config.principalSponsors"></div>
+            </div>
+
+            <div class="py-8 md:py-0 lg:pl-10">
+                <h4 class="text-[10px] uppercase tracking-[0.3em] font-semibold text-stone-400 mb-6">Bridal Party</h4>
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-[9px] uppercase tracking-widest text-stone-400 mb-1">Maid of Honor</p>
+                        <span class="serif text-2xl italic text-[var(--accent)]" x-text="config.moh"></span>
+                    </div>
+                    <div>
+                        <p class="text-[9px] uppercase tracking-widest text-stone-400 mb-1">Best Man</p>
+                        <span class="serif text-2xl italic text-[var(--accent)]" x-text="config.bestMan"></span>
+                    </div>
+                    <div class="pt-4 border-t border-stone-100">
+                        <p class="text-[9px] uppercase tracking-widest text-stone-400 mb-3">The Attendants</p>
+                        <div class="serif text-base space-y-1 text-stone-600 leading-relaxed" x-html="config.weddingPartyList"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= GALLERY ================= -->
+    <section id="gallery" class="py-20 md:py-32 bg-stone-50 px-6 md:px-12">
+        <div class="max-w-7xl mx-auto space-y-12">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end border-b border-stone-200 pb-6 gap-4">
+                <h2 class="serif text-4xl md:text-6xl">Captured <span class="italic font-light">Moments</span></h2>
+                <span class="text-[10px] uppercase tracking-[0.3em] text-stone-400">Editorial visual diary</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="img-wrap aspect-[3/4]"><img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=800&auto=format&fit=crop"></div>
+                <div class="img-wrap aspect-[3/4] sm:mt-12"><img src="https://images.unsplash.com/photo-1606800052052-a08af7148866?q=80&w=800&auto=format&fit=crop"></div>
+                <div class="img-wrap aspect-[3/4]"><img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?q=80&w=800&auto=format&fit=crop"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= REGISTRY ================= -->
+    <section id="registry" class="py-20 md:py-32 px-6 max-w-4xl mx-auto text-center space-y-10">
+        <div class="space-y-4">
+            <span class="text-[10px] uppercase tracking-[0.4em] text-stone-400 block">Gifts</span>
+            <h2 class="serif text-4xl md:text-6xl">With Thanks</h2>
+        </div>
+        <p class="text-stone-600 font-light max-w-xl mx-auto leading-relaxed text-sm md:text-base px-4">
+            Your presence is our greatest gift. However, if you wish to celebrate our marriage with a gift, a monetary contribution to our future home would be warmly welcomed.
+        </p>
+        
+        <div class="p-8 md:p-12 border border-stone-200 bg-stone-50/50 max-w-sm mx-auto space-y-4 shadow-sm">
+            <span class="text-[10px] uppercase tracking-[0.3em] font-semibold text-stone-500 block">GCash Digital Transfer</span>
+            <div class="serif text-2xl md:text-3xl tracking-wider font-medium text-[var(--accent)]" x-text="config.gcashNumber"></div>
+            <span class="text-[10px] text-stone-400 block uppercase tracking-widest" x-text="'Acc: ' + config.gcashName"></span>
+        </div>
+    </section>
+
+    <!-- ================= FAQS ================= -->
+    <section id="faq" class="py-20 md:py-32 px-6 md:px-12 max-w-3xl mx-auto border-t border-stone-200">
+        <div class="text-center mb-12 md:mb-16">
+            <span class="text-[10px] uppercase tracking-[0.4em] text-[var(--accent)] font-semibold block mb-2">Need to know</span>
+            <h2 class="serif text-4xl md:text-5xl">Common Questions</h2>
+        </div>
+
+        <div class="divide-y divide-stone-200 border-y border-stone-200">
+            <template x-for="(faq, idx) in faqs" :key="idx">
+                <div class="py-5 md:py-7">
+                    <button @click="openFaq === idx ? openFaq = null : openFaq = idx" class="w-full flex justify-between items-center text-left gap-4">
+                        <span class="serif text-lg md:text-2xl hover:text-[var(--accent)] transition-colors" x-text="faq.q"></span>
+                        <span class="text-sm font-light flex-shrink-0" x-text="openFaq === idx ? '—' : '+'"></span>
+                    </button>
+                    <div x-show="openFaq === idx" x-collapse x-transition class="pt-4 text-stone-500 font-light text-sm md:text-base leading-relaxed" x-text="faq.a"></div>
+                </div>
+            </template>
+        </div>
+    </section>
+
+    <!-- ================= RSVP ================= -->
+    <section id="rsvp" class="py-24 md:py-40 bg-stone-900 text-white text-center px-6">
+        <div class="max-w-3xl mx-auto space-y-8 md:space-y-12">
+            <div class="space-y-4">
+                <span class="text-[10px] uppercase tracking-[0.5em] text-[var(--accent)] font-bold block">Response</span>
+                <h2 class="serif text-5xl md:text-7xl lg:text-8xl italic leading-tight">Join the Celebration</h2>
+            </div>
+            <p class="text-stone-400 font-light max-w-md mx-auto text-sm md:text-base">Please let us know if we can expect you by <span class="text-white font-medium" x-text="config.rsvpDeadline"></span>.</p>
+            
+            <div class="pt-4 md:pt-8">
+                <a :href="config.rsvpFormUrl" target="_blank" class="inline-block bg-white text-stone-900 px-10 md:px-14 py-4 md:py-5 text-[10px] md:text-xs uppercase tracking-[0.3em] font-semibold hover:bg-[var(--accent)] hover:text-white transition-all w-full sm:w-auto">
+                    Open RSVP Form
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="py-12 md:py-20 text-center text-stone-400 text-[9px] md:text-[10px] uppercase tracking-[0.4em] px-6">
+        <p x-text="'The Wedding of ' + config.groomFirstName + ' & ' + config.brideFirstName"></p>
+        <p class="mt-2 opacity-50">&copy; 2026. All Rights Reserved.</p>
+    </footer>
+
+    <!-- ================= ALPINE JS LOGIC ================= -->
+    <script>
+        function editorialTheme() {
+            return {
+                scrolled: false,
+                mobileMenu: false,
+                openFaq: null,
+                timeLeft: { days: 0, hours: 0, minutes: 0, seconds: 0 },
+
+                config: {
+                    groomFirstName: "Alex",
+                    brideFirstName: "Jordan",
+                    groomInitials: "A",
+                    brideInitials: "J",
+                    fullDate: "October 31, 2026",
+                    targetDateISO: "2026-10-31T15:00:00",
+                    cityState: "New York, NY",
+                    storyText1: "Our paths crossed in the quiet corner of a busy downtown gallery. What started as an accidental conversation about a modernist painting turned into a four-hour coffee date.",
+                    storyText2: "Five years, three apartments, and countless sunsets later, we are making our ultimate commitment. We built our relationship on intentionality, deep laughs, and a shared love for the quiet moments.",
+                    churchName: "St. Patrick’s Old Cathedral",
+                    churchAddress: "263 Mulberry St, New York, NY 10012",
+                    churchTime: "Ceremony at 3:00 PM",
+                    churchMap: "https://maps.google.com",
+                    venueName: "The Glasshouse Loft",
+                    venueAddress: "545 W 25th St, New York, NY 10001",
+                    venueTime: "Cocktails & Reception at 5:30 PM",
+                    venueMap: "https://maps.google.com",
+                    gcashNumber: "0917 555 0192",
+                    gcashName: "Jordan Smith",
+                    rsvpDeadline: "September 15, 2026",
+                    rsvpFormUrl: "https://docs.google.com/forms/",
+                    groomParents: "Jonathan Henderson <br> Margaret Henderson",
+                    brideParents: "Robert Smith <br> Eleanor Smith",
+                    principalSponsors: "Dr. Aris Thorne & Mrs. Clara Thorne <br> Mr. Vance Sterling & Hon. Diane Sterling <br> Atty. Marcus Brody & Dr. Evelyn Brody",
+                    moh: "Valerie Smith",
+                    bestMan: "Christopher Henderson",
+                    weddingPartyList: "Liam Thorne <br> Maya Lin <br> Noah Sterling <br> Chloe Bennett"
+                },
+
+                faqs: [
+                    { q: "Can I bring a plus one?", a: "Due to the intimate layout of our venue, we are only able to accommodate the guests specifically named on your formal digital envelope." },
+                    { q: "Are children allowed?", a: "While we adore your little ones, we have chosen to make our special day an adults-only occasion so everyone can relax and celebrate." },
+                    { q: "Is there parking at the venue?", a: "Yes, complimentary valet parking will be provided at the entrance of the reception venue beginning at 5:00 PM." }
+                ],
+
+                init() {
+                    window.addEventListener('scroll', () => { this.scrolled = window.scrollY > 50; });
+                    this.runTimer();
+                    setInterval(() => this.runTimer(), 1000);
+                },
+
+                runTimer() {
+                    const countTo = new Date(this.config.targetDateISO).getTime();
+                    const now = new Date().getTime();
+                    const diff = countTo - now;
+                    if (diff > 0) {
+                        this.timeLeft.days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                        this.timeLeft.hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        this.timeLeft.minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                        this.timeLeft.seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    }
+                }
+            }
+        }
     </script>
 </body>
 </html>

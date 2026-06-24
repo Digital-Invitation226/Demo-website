@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSVP — Alex & Jordan</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        [x-cloak] { display: none !important; }
+        :root { 
+            --bg: #F9F8F6; /* Soft paper white */
+            --text: #1C1917;
+            --accent: #800020; 
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+        }
+        .serif { font-family: Cormorant Garamond, serif; }
+
+        /* Stationary Style Inputs */
+        input:focus, textarea:focus {
+            outline: none;
+            border-bottom-color: var(--accent) !important;
+        }
+        
+        .fade-in { animation: fadeIn 1s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6" x-data="rsvpHandler()">
+
+    <!-- BACKGROUND INITIALS (FADED) -->
+    <div class="fixed inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] overflow-hidden">
+        <h1 class="serif text-[40rem] select-none">A&J</h1>
+    </div>
+
+    <!-- MAIN RSVP CARD -->
+    <div class="relative w-full max-w-2xl bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-stone-100 p-8 md:p-16 fade-in">
+        
+        <!-- HEADER -->
+        <div class="text-center mb-12 space-y-4">
+            <a href="index.html" class="text-[10px] uppercase tracking-[0.4em] text-stone-400 hover:text-[var(--accent)] transition-colors">← Back to Site</a>
+            <h1 class="serif text-5xl md:text-6xl italic">Response</h1>
+            <p class="text-[10px] uppercase tracking-[0.3em] text-stone-500">Kindly reply by September 15, 2026</p>
+        </div>
+
+        <!-- FORM CONTENT -->
+        <div x-show="!submitted">
+            <form @submit.prevent="submitForm" class="space-y-10">
+                
+                <!-- ATTENDANCE TOGGLE -->
+                <div class="flex flex-col items-center gap-6">
+                    <p class="serif text-2xl italic">Will you join the celebration?</p>
+                    <div class="flex gap-4 w-full sm:w-auto">
+                        <button type="button" 
+                                @click="form.status = 'Attending'"
+                                :class="form.status === 'Attending' ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-transparent text-stone-400 border-stone-200'"
+                                class="flex-1 sm:w-32 py-3 border text-[10px] uppercase tracking-widest font-bold transition-all">
+                            Joining
+                        </button>
+                        <button type="button" 
+                                @click="form.status = 'Declining'"
+                                :class="form.status === 'Declining' ? 'bg-stone-800 text-white border-stone-800' : 'bg-transparent text-stone-400 border-stone-200'"
+                                class="flex-1 sm:w-32 py-3 border text-[10px] uppercase tracking-widest font-bold transition-all">
+                            Regretfully
+                        </button>
+                    </div>
+                </div>
+
+                <div x-show="form.status !== ''" x-transition.opacity.duration.500ms class="space-y-12">
+                    
+                    <!-- NAME INPUT -->
+                    <div class="relative">
+                        <label class="text-[9px] uppercase tracking-widest text-stone-400 block mb-2">Guest Full Name(s)</label>
+                        <input type="text" x-model="form.names" required 
+                               class="w-full bg-transparent border-b border-stone-200 py-2 serif text-2xl italic placeholder:text-stone-100"
+                               placeholder="e.g. Mr. and Mrs. Smith">
+                    </div>
+
+                    <!-- CONDITIONAL ATTENDING FIELDS -->
+                    <template x-if="form.status === 'Attending'">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div class="relative">
+                                <label class="text-[9px] uppercase tracking-widest text-stone-400 block mb-2">Number of Guests</label>
+                                <input type="number" x-model="form.count" min="1" max="10"
+                                       class="w-full bg-transparent border-b border-stone-200 py-2 serif text-2xl">
+                            </div>
+                            <div class="relative">
+                                <label class="text-[9px] uppercase tracking-widest text-stone-400 block mb-2">Dietary Restrictions</label>
+                                <input type="text" x-model="form.diet"
+                                       class="w-full bg-transparent border-b border-stone-200 py-2 serif text-2xl italic placeholder:text-stone-100"
+                                       placeholder="e.g. Vegan, Nut Allergy">
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- MESSAGE -->
+                    <div class="relative">
+                        <label class="text-[9px] uppercase tracking-widest text-stone-400 block mb-2">A message for the couple (Optional)</label>
+                        <textarea x-model="form.message" rows="2"
+                                  class="w-full bg-transparent border-b border-stone-200 py-2 serif text-2xl italic placeholder:text-stone-100"
+                                  placeholder="Write something..."></textarea>
+                    </div>
+
+                    <!-- SUBMIT BUTTON -->
+                    <div class="pt-6">
+                        <button type="submit" 
+                                :disabled="loading"
+                                class="w-full bg-stone-900 text-white py-5 text-[10px] uppercase tracking-[0.4em] font-bold hover:bg-[var(--accent)] transition-all flex justify-center items-center gap-3">
+                            <span x-show="!loading">Send Response</span>
+                            <span x-show="loading" class="animate-pulse">Processing...</span>
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- SUCCESS MESSAGE -->
+        <div x-show="submitted" x-cloak x-transition.duration.500ms class="text-center py-20 space-y-6">
+            <div class="w-16 h-16 bg-stone-50 text-[var(--accent)] rounded-full flex items-center justify-center mx-auto mb-8">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <h2 class="serif text-4xl italic">Thank You, <span x-text="form.names"></span></h2>
+            <p class="text-stone-500 font-light text-sm max-w-xs mx-auto leading-relaxed">
+                Your response has been recorded. We look forward to seeing you in New York.
+            </p>
+            <div class="pt-8">
+                <a href="index.html" class="text-[10px] uppercase tracking-widest border-b border-stone-200 pb-1 hover:border-[var(--accent)] transition-all">Back to Home</a>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function rsvpHandler() {
+            return {
+                loading: false,
+                submitted: false,
+                form: {
+                    status: '',
+                    names: '',
+                    count: 1,
+                    diet: '',
+                    message: ''
+                },
+                submitForm() {
+                    this.loading = true;
+
+                    // SIMULATION: In a real app, you would use fetch() to send this data 
+                    // to Google Sheets, Formspree, or your backend.
+                    console.log("Form Data Submitted:", this.form);
+
+                    setTimeout(() => {
+                        this.loading = false;
+                        this.submitted = true;
+                    }, 2000);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
